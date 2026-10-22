@@ -1,0 +1,204 @@
+================================================================================
+1. DADOS DE ENTRADA
+================================================================================
+Arquivo: dados/dados_clima_manaus.csv
+Registros válidos lidos: 10   (linhas descartadas: 0)
+Simulados: 9990 registros do verão amazônico (ago-out), semente 2026,
+para atingir N = 10000 (a especificação exige N >= 10000).
+Total processado: N = 10000 registros (10 reais + 9990 simulados)
+Conjunto utilizado gravado em: resultados/dados_utilizados.csv
+
+================================================================================
+2. CONSULTAS OBRIGATÓRIAS (conjunto completo)
+================================================================================
+
+Mediana exata do PM2.5  (k = 5.000 de N = 10.000)
+  Abordagem A (ordenação bolha)   PM2.5 =   33.3 µg/m³   comparações =    49.995.000   tempo =   430.292 ms
+  Abordagem B (particionamento)   PM2.5 =   33.3 µg/m³   comparações =        41.548   tempo =     0.551 ms
+  Abordagem C (contagem)          PM2.5 =   33.3 µg/m³   comparações =     2.510.000   tempo =    19.269 ms
+  -> As três abordagens encontraram o mesmo valor.
+
+Limiar crítico do PM2.5 (percentil 90)  (k = 9.000 de N = 10.000)
+  Abordagem A (ordenação bolha)   PM2.5 =   85.4 µg/m³   comparações =    49.995.000   tempo =   416.666 ms
+  Abordagem B (particionamento)   PM2.5 =   85.4 µg/m³   comparações =        38.231   tempo =     0.427 ms
+  Abordagem C (contagem)          PM2.5 =   85.4 µg/m³   comparações =    84.450.000   tempo =   628.079 ms
+  -> As três abordagens encontraram o mesmo valor.
+  Dias com PM2.5 acima de 85.4 µg/m³ (alerta severo): 1.000 de 10.000 (10.0%)
+
+Os 10 dias mais secos (menores valores de umidade relativa)
+  Abordagem A (ordenação bolha)   10 registros        comparações =    49.995.000   tempo =   397.697 ms
+  Abordagem B (particionamento)   10 registros        comparações =        10.247   tempo =     0.070 ms
+  Abordagem C (contagem)          10 registros        comparações =    58.130.000   tempo =   472.211 ms
+  -> As três abordagens encontraram os mesmos valores de umidade.
+
+   #  Data        Sensor  Umidade  Temperatura  PM2.5   (lista da Abordagem A)
+   1  2026-09-29     188      12%      38.0 °C  128.7
+   2  2026-10-06     145      12%      36.6 °C   99.4
+   3  2026-09-29     150      12%      38.4 °C  188.6
+   4  2026-09-29     125      12%      39.2 °C  265.5
+   5  2026-10-06     160      12%      39.8 °C   74.6
+   6  2026-09-29     176      12%      39.9 °C  120.9
+   7  2026-09-29     177      12%      39.5 °C  110.6
+   8  2026-09-29     135      12%      39.9 °C  175.5
+   9  2026-09-29     197      12%      38.6 °C  229.0
+  10  2026-09-29     147      12%      39.5 °C  129.3
+
+================================================================================
+3. ANÁLISE DE DESEMPENHO (número de comparações e tempo de CPU)
+================================================================================
+Para cada N são usados os N primeiros registros do conjunto.
+Mediana e P90 sobre o PM2.5; dias mais secos (M = 10) sobre a umidade.
+
+|     N  | Abordagem              |  Mediana (comp.) |      P90 (comp.) |  M secos (comp.) | Tempo total (ms) |
+|-------:|------------------------|-----------------:|-----------------:|-----------------:|-----------------:|
+|  1.000 | A (ordenação bolha)    |          499.500 |          499.500 |          499.500 |           10.445 |
+|  1.000 | B (particionamento)    |            2.697 |            2.446 |            1.753 |            0.091 |
+|  1.000 | C (contagem)           |          200.000 |          541.000 |          915.000 |           11.745 |
+|  5.000 | A (ordenação bolha)    |       12.497.500 |       12.497.500 |       12.497.500 |          290.884 |
+|  5.000 | B (particionamento)    |           23.339 |           14.922 |            9.218 |            0.432 |
+|  5.000 | C (contagem)           |        1.775.000 |        2.415.000 |       22.925.000 |          204.924 |
+| 10.000 | A (ordenação bolha)    |       49.995.000 |       49.995.000 |       49.995.000 |         1200.755 |
+| 10.000 | B (particionamento)    |           41.548 |           38.231 |           10.247 |            0.770 |
+| 10.000 | C (contagem)           |        2.510.000 |       84.450.000 |       58.130.000 |         1126.985 |
+
+Referências teóricas:  N(N-1)/2 = bolha;  N² = pior caso da contagem
+  N =  1.000:  N(N-1)/2 =       499.500   N² =     1.000.000
+  N =  5.000:  N(N-1)/2 =    12.497.500   N² =    25.000.000
+  N = 10.000:  N(N-1)/2 =    49.995.000   N² =   100.000.000
+
+Crescimento de N = 1.000 para N = 10.000 (N 10x maior) — Questão 4, somando as três consultas:
+  Abordagem A (ordenação bolha)   comparações x  100.1   tempo x  115.0
+  Abordagem B (particionamento)   comparações x   13.1   tempo x    8.5
+  Abordagem C (contagem)          comparações x   87.6   tempo x   96.0
+  (crescimento linear ~ x10; quadrático ~ x100)
+
+================================================================================
+4. MELHOR E PIOR CASO MEDIDOS (N = 1000, k = mediana)
+================================================================================
+| Cenário                        | A (bolha)       | B (partição)    | C (contagem)    |
+|--------------------------------|----------------:|----------------:|----------------:|
+| aleatório, valores distintos   |         499.500 |           7.072 |         539.000 |
+| já ordenado (crescente)        |         499.500 |           1.000 |         500.000 |
+| ordem decrescente              |         499.500 |           1.989 |         501.000 |
+| todos os valores iguais        |         499.500 |           1.000 |           1.000 |
+| resposta na 1ª posição         |         499.500 |           3.042 |           1.000 |
+| resposta na última posição     |         499.500 |           3.959 |       1.000.000 |
+| adversário do pivô central     |         499.500 |         375.250 |         750.000 |
+
+Fórmulas para N = 1.000, k = 500:
+  A: sempre N(N-1)/2 = 499.500 (a bolha do código-base não para antes)
+  B: melhor caso N = 1.000 (1ª partição acerta); pior caso sum_{t=0}^{k-1}(N-t) = 375.250
+  C: melhor caso N = 1.000 (resposta no 1º elemento); pior caso N² = 1.000.000 (resposta no último)
+
+================================================================================
+4. MELHOR E PIOR CASO MEDIDOS (N = 10000, k = mediana)
+================================================================================
+| Cenário                        | A (bolha)       | B (partição)    | C (contagem)    |
+|--------------------------------|----------------:|----------------:|----------------:|
+| aleatório, valores distintos   |      49.995.000 |          47.527 |      52.990.000 |
+| já ordenado (crescente)        |      49.995.000 |          10.000 |      50.000.000 |
+| ordem decrescente              |      49.995.000 |          19.987 |      50.010.000 |
+| todos os valores iguais        |      49.995.000 |          10.000 |          10.000 |
+| resposta na 1ª posição         |      49.995.000 |          31.994 |          10.000 |
+| resposta na última posição     |      49.995.000 |          45.819 |     100.000.000 |
+| adversário do pivô central     |      49.995.000 |      37.502.500 |      75.000.000 |
+
+Fórmulas para N = 10.000, k = 5.000:
+  A: sempre N(N-1)/2 = 49.995.000 (a bolha do código-base não para antes)
+  B: melhor caso N = 10.000 (1ª partição acerta); pior caso sum_{t=0}^{k-1}(N-t) = 37.502.500
+  C: melhor caso N = 10.000 (resposta no 1º elemento); pior caso N² = 100.000.000 (resposta no último)
+
+================================================================================
+5.1 QUESTÃO 1 — Rastreando a Abordagem C (contagem comparativa)
+================================================================================
+Lista: [45, 90, 30, 90, 60], procurando a mediana (k = 3).
+Cada elemento é comparado com TODOS os 5 elementos (inclusive ele mesmo,
+como no código-base). Ele ocupa as posições (menores+1)..(menores ou iguais).
+
+  Elemento 1 (valor 45):
+      45 comparado com 45: igual
+      90 comparado com 45: maior
+      30 comparado com 45: menor
+      90 comparado com 45: maior
+      60 comparado com 45: maior
+    menores = 1, menores ou iguais = 2 -> ocupa as posições 2..2; ordem 3 não está no intervalo
+  Elemento 2 (valor 90):
+      45 comparado com 90: menor
+      90 comparado com 90: igual
+      30 comparado com 90: menor
+      90 comparado com 90: igual
+      60 comparado com 90: menor
+    menores = 3, menores ou iguais = 5 -> ocupa as posições 4..5; ordem 3 não está no intervalo
+  Elemento 3 (valor 30):
+      45 comparado com 30: maior
+      90 comparado com 30: maior
+      30 comparado com 30: igual
+      90 comparado com 30: maior
+      60 comparado com 30: maior
+    menores = 0, menores ou iguais = 1 -> ocupa as posições 1..1; ordem 3 não está no intervalo
+  Elemento 4 (valor 90):
+      45 comparado com 90: menor
+      90 comparado com 90: igual
+      30 comparado com 90: menor
+      90 comparado com 90: igual
+      60 comparado com 90: menor
+    menores = 3, menores ou iguais = 5 -> ocupa as posições 4..5; ordem 3 não está no intervalo
+  Elemento 5 (valor 60):
+      45 comparado com 60: menor
+      90 comparado com 60: maior
+      30 comparado com 60: menor
+      90 comparado com 60: maior
+      60 comparado com 60: igual
+    menores = 2, menores ou iguais = 3 -> ocupa as posições 3..3; ordem 3 ESTÁ no intervalo: resposta encontrada
+
+Resultado: 3-ª ordem estatística = 60
+Total de comparações diretas: 25 (5 elementos avaliados x 5 comparações)
+
+================================================================================
+5.2 QUESTÃO 2 — Medições iguais (empates) na Abordagem C
+================================================================================
+Lista com três dias de pico idêntico: [45, 90, 30, 90, 90]  (ordenada: [30, 45, 90, 90, 90])
+
+  k | só estritamente menores (<)           | menores e menores ou iguais (<, <=)
+  --|----------------------------------------|------------------------------------
+  1 | 30 (15 comparações)                    | 30 (15 comparações)
+  2 | 45 (5 comparações)                     | 45 (5 comparações)
+  3 | 90 (10 comparações)                    | 90 (10 comparações)
+  4 | NÃO ENCONTRA: passaria do fim do vetor | 90 (10 comparações)
+  5 | NÃO ENCONTRA: passaria do fim do vetor | 90 (10 comparações)
+
+Com '<' cada 90 tem 2 menores e recebe a ordem 3; as ordens 4 e 5 não
+pertencem a ninguém e o do-while do código-base sai do vetor. A correção
+conta também os '<=' (3 e 5) e aceita o valor se menores < k <= menores_ou_iguais.
+
+================================================================================
+5.3 QUESTÃO 3 — Impacto da escolha do pivô (Abordagem B)
+================================================================================
+N = 10000 registros de PM2.5 (com valores repetidos).
+
+| Entrada         | Pivô               | Mediana (comp.) | P90 (comp.)     | Tempo (ms) |
+|-----------------|--------------------|----------------:|----------------:|-----------:|
+| ordem original  | primeiro elemento  |          44.325 |          12.662 |      0.504 |
+| ordem original  | aleatório          |          71.018 |          32.092 |      0.688 |
+| ordem original  | central (exigido)  |          41.548 |          38.231 |      0.592 |
+| já ordenada     | primeiro elemento  |       9.906.608 |       6.029.190 |     71.200 |
+| já ordenada     | aleatório          |          26.970 |          35.069 |      0.269 |
+| já ordenada     | central (exigido)  |          10.000 |          19.930 |      0.127 |
+
+Com a entrada ordenada e pivô = primeiro elemento, cada partição só
+descarta o próprio pivô (e suas cópias): o custo vira quadrático, como a bolha.
+
+================================================================================
+5.5 QUESTÃO 5 — Reutilização (A) vs. velocidade única (B)
+================================================================================
+N = 10000. Primeiro a mediana (33.3 µg/m³), depois o P90 (85.4 µg/m³).
+
+| Estratégia                           | Mediana       | P90           | Total         |
+|--------------------------------------|--------------:|--------------:|--------------:|
+| A: ordena 1 vez + acesso direto      |    49.995.000 |             0 |    49.995.000 |
+| B: novo particionamento (mesmo vetor)|        41.548 |        19.949 |        61.497 |
+| B: P90 sobre uma cópia nova          |             - |        38.231 |             - |
+
+A: depois de ordenado, qualquer outra ordem estatística sai de vetor[k-1]
+sem nenhuma comparação. B: o vetor só fica parcialmente organizado, então
+cada pergunta exige um novo particionamento (P90 = 85.4 nos dois casos).
